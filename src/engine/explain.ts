@@ -9,6 +9,8 @@ export interface Explanation {
   ifDelay: string
   progress: { goal: Goal; before: number; after: number } | null
   source: 'ai' | 'local'
+  /** True when the model hasn't judged this task yet and its words would be used. */
+  aiPending: boolean
 }
 
 /**
@@ -161,10 +163,11 @@ export function explain(r: Ranked, input: EngineInput): Explanation {
   // AI copy wins when it's about this exact version of the task and no
   // short-lived context (low energy, no time, a plan) is shaping the pick.
   const ai = input.ai[task.id]
-  if (ai && ai.reason && !r.planned && !lowE && !shortT) {
-    return { reason: ai.reason, ifNow: ai.now || ifNow, ifDelay: ai.delay || ifDelay, progress, source: 'ai' }
+  const contextual = r.planned || lowE || shortT
+  if (ai && ai.reason && !contextual) {
+    return { reason: ai.reason, ifNow: ai.now || ifNow, ifDelay: ai.delay || ifDelay, progress, source: 'ai', aiPending: false }
   }
-  return { reason, ifNow, ifDelay, progress, source: 'local' }
+  return { reason, ifNow, ifDelay, progress, source: 'local', aiPending: !ai && !contextual }
 }
 
 /** Why a task sits in its bucket — shown in the task detail sheet. */

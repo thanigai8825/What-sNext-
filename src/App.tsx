@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect, type ComponentType } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router'
 import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { initAI, scheduleRanking } from './ai/brain'
@@ -14,16 +14,24 @@ import { isTyping, useIsDesktop } from './lib/hooks'
 import { tBase } from './lib/motion'
 import { notify, stageMorning } from './lib/notify'
 import { FocusScreen } from './screens/Focus'
-import { GoalsScreen } from './screens/Goals'
-import { KnowledgeScreen } from './screens/Knowledge'
 import { NowScreen } from './screens/Now'
-import { Onboarding } from './screens/onboarding/Onboarding'
-import { ReviewScreen } from './screens/Review'
-import { SettingsScreen } from './screens/Settings'
 import { TasksScreen } from './screens/Tasks'
 import { rankState, useApp } from './store/app'
 import { useUI } from './store/ui'
 import { startSync } from './data/sync'
+
+/** Lazy screen that can be warmed up before anyone navigates to it. */
+function preloadable<T extends ComponentType>(load: () => Promise<{ default: T }>) {
+  let p: Promise<{ default: T }> | null = null
+  const get = () => (p ??= load())
+  return Object.assign(lazy(get), { preload: get })
+}
+
+const Onboarding = preloadable(() => import('./screens/onboarding/Onboarding').then((m) => ({ default: m.Onboarding })))
+const GoalsScreen = preloadable(() => import('./screens/Goals').then((m) => ({ default: m.GoalsScreen })))
+const ReviewScreen = preloadable(() => import('./screens/Review').then((m) => ({ default: m.ReviewScreen })))
+const SettingsScreen = preloadable(() => import('./screens/Settings').then((m) => ({ default: m.SettingsScreen })))
+const KnowledgeScreen = preloadable(() => import('./screens/Knowledge').then((m) => ({ default: m.KnowledgeScreen })))
 
 export function App() {
   useTheme()
@@ -32,6 +40,9 @@ export function App() {
   useEffect(() => {
     void initAI()
     void startSync()
+    // Warm the other screens once the first one has painted, so navigation never waits.
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1200))
+    idle(() => [GoalsScreen, ReviewScreen, SettingsScreen, KnowledgeScreen, Onboarding].forEach((c) => void c.preload()))
     // Re-judge with the model whenever the world it reasons about changes.
     return useApp.subscribe((s, prev) => {
       if (s.tasks !== prev.tasks || s.goals !== prev.goals || s.kb !== prev.kb) scheduleRanking()
@@ -79,12 +90,9 @@ function Shell() {
       {chrome && <Sidebar />}
       <div className={cn(chrome && 'md:pl-[208px]')}>
         <AnimatePresence mode="popLayout" initial={false}>
-          <motion.div
-            key={section}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0, transition: tBase }}
-            exit={{ opacity: 0, transition: { duration: 0.14 } }}
-          >
+          {/* Opacity only: a transform here would trap the fixed Focus screen. */}
+          <motion.div key={section} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: tBase }} exit={{ opacity: 0, transition: { duration: 0.14 } }}>
+            <Suspense fallback={null}>
             <Routes location={location}>
               <Route path="/welcome" element={<Onboarding />} />
               <Route path="/" element={<NowScreen />} />
@@ -96,6 +104,7 @@ function Shell() {
               <Route path="/settings/knowledge" element={<KnowledgeScreen />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </div>

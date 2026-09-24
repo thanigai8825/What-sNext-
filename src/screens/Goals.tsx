@@ -95,9 +95,9 @@ function GoalCard({
         {recent.length ? (
           <ul className="space-y-1">
             {recent.map((t) => (
-              <li key={t.id} className="flex gap-2 text-caption text-ink-2">
+              <li key={t.id} className="flex text-caption text-ink-2">
                 <span className="truncate">{t.title}</span>
-                {t.completedAt && <span className="shrink-0 text-ink-3">· {winDay(t.completedAt)}</span>}
+                {t.completedAt && <span className="shrink-0 whitespace-pre text-ink-3">{` · ${winDay(t.completedAt)}`}</span>}
               </li>
             ))}
           </ul>

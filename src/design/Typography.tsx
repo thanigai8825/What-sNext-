@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { motion } from 'motion/react'
+import { tSlow } from '../lib/motion'
 import { cn } from '../lib/cn'
 
 interface MicroProps {
@@ -6,7 +8,7 @@ interface MicroProps {
   className?: string
   /** Text color class; tertiary by default. */
   color?: string
-  as?: 'p' | 'h2' | 'h3' | 'span'
+  as?: 'p' | 'h1' | 'h2' | 'h3' | 'span'
 }
 
 export function MicroLabel({ children, className, color = 'text-ink-3', as: Tag = 'p' }: MicroProps) {
@@ -23,6 +25,16 @@ export function LargeTitle({ children, accessory, className }: { children: React
   )
 }
 
+/** Screen container: centered 640px column that rises gently into place. */
 export function Page({ children, className }: { children: ReactNode; className?: string }) {
-  return <main className={cn('mx-auto w-full max-w-[640px] px-6 pt-12 pb-40 md:px-12 md:pt-16 md:pb-24', className)}>{children}</main>
+  return (
+    <motion.main
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={tSlow}
+      className={cn('mx-auto w-full max-w-[640px] px-6 pt-12 pb-40 md:px-12 md:pt-16 md:pb-24', className)}
+    >
+      {children}
+    </motion.main>
+  )
 }

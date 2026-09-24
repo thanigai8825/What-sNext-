@@ -110,7 +110,7 @@ export function NowScreen() {
       <div className="mb-4 flex h-11 items-center justify-between">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div key={greeting ? 'back' : 'now'} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={tBase}>
-            <MicroLabel>{greeting ? greetingText : 'Right now'}</MicroLabel>
+            <MicroLabel as="h1">{greeting ? greetingText : 'Right now'}</MicroLabel>
           </motion.div>
         </AnimatePresence>
         <SettingsButton />
@@ -179,7 +179,6 @@ function FocusCard({
   const [why, setWhy] = useState(false)
   const goal = useApp((s) => (task.goalId ? s.goals.find((g) => g.id === task.goalId) : null))
   const aiEnabled = useUI((s) => s.aiEnabled)
-  const aiBusy = useUI((s) => s.aiBusy)
   const partial = useUI((s) => s.aiPartial[task.id])
   const done = celebrating !== undefined
 
@@ -189,7 +188,7 @@ function FocusCard({
     const t = window.setTimeout(() => setWaited(true), 3500)
     return () => window.clearTimeout(t)
   }, [])
-  const awaitingAI = !!aiEnabled && aiBusy && ex.source === 'local' && !waited && !r.planned
+  const awaitingAI = !!aiEnabled && ex.aiPending && !waited
 
   const meta = [effortLabel(task.effort), task.due ? dueLabel(task.due, task.dueHasTime, new Date()) : null].filter(Boolean).join(' · ')
 
@@ -203,7 +202,7 @@ function FocusCard({
       className="relative overflow-hidden rounded-focus bg-surface p-6 shadow-focus md:p-8"
     >
       <motion.div animate={done ? { scale: 0.97, opacity: 0, filter: 'blur(2px)' } : { scale: 1, opacity: 1, filter: 'blur(0px)' }} transition={tBase} aria-hidden={done}>
-        <motion.h2 layoutId={`title-${task.id}`} id={`task-${task.id}`} className="text-display font-semibold text-ink text-balance">
+        <motion.h2 layoutId={`title-${task.id}`} layoutCrossfade={false} id={`task-${task.id}`} className="text-display font-semibold text-ink text-balance">
           {task.title}
         </motion.h2>
         <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">

@@ -42,7 +42,7 @@ export function Onboarding() {
         </div>
         <div className="w-11" />
       </header>
-      <div className="relative mx-auto flex w-full max-w-[560px] flex-1 flex-col px-6 pb-[calc(24px+env(safe-area-inset-bottom))]">
+      <main className="relative mx-auto flex w-full max-w-[560px] flex-1 flex-col px-6 pb-[calc(24px+env(safe-area-inset-bottom))]">
         <AnimatePresence mode="wait" custom={dir} initial={false}>
           <motion.div
             key={step}
@@ -63,7 +63,7 @@ export function Onboarding() {
             {step === 3 && <FirstTasks />}
           </motion.div>
         </AnimatePresence>
-      </div>
+      </main>
     </div>
   )
 }
@@ -87,8 +87,8 @@ function Footer({ children }: { children: ReactNode }) {
 
 function Welcome({ onNext }: { onNext: () => void }) {
   return (
-    <>
-      <div className="flex flex-1 flex-col justify-center pb-8">
+    <div className="flex flex-1 flex-col md:justify-center md:pb-24">
+      <div className="flex flex-1 flex-col justify-center pb-8 md:flex-none md:pb-0">
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ ...springPop, delay: 0.1 }}>
           <Mark size={44} />
         </motion.div>
@@ -104,12 +104,12 @@ function Welcome({ onNext }: { onNext: () => void }) {
           Tell it what matters. It shows you the one thing to do right now, and why.
         </motion.p>
       </div>
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...tSlow, delay: 0.9 }}>
+      <motion.div className="md:mt-12" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...tSlow, delay: 0.9 }}>
         <Button full onClick={onNext} data-autofocus>
           Get started
         </Button>
       </motion.div>
-    </>
+    </div>
   )
 }
 
@@ -314,7 +314,12 @@ function Knowledge({ onNext }: { onNext: () => void }) {
         detail="Ask the AI you already use to describe how you work, then paste its answer. It stays private and only shapes your picks."
       />
       <div className="mt-10">
-        <KnowledgeImport onImport={(raw, fields) => setDraft({ raw, fields })} />
+        <KnowledgeImport
+          onImport={(raw, fields) => {
+            setDraft({ raw, fields })
+            window.scrollTo({ top: 0 })
+          }}
+        />
         <div className="mt-2 flex justify-center">
           <Button
             variant="text"

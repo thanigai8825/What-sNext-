@@ -116,7 +116,7 @@ export function FocusScreen() {
           aria-hidden={isDone}
         >
           <MicroLabel>{running || isDone ? 'Focus' : 'Paused'}</MicroLabel>
-          <motion.h1 layoutId={`title-${shownTask.id}`} className="mt-4 max-w-[560px] text-display font-semibold text-ink text-balance">
+          <motion.h1 layoutId={`title-${shownTask.id}`} layoutCrossfade={false} className="mt-4 max-w-[560px] text-display font-semibold text-ink text-balance">
             {shownTask.title}
           </motion.h1>
           <motion.p

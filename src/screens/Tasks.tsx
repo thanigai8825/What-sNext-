@@ -35,6 +35,20 @@ export function TasksScreen() {
   }
   useEffect(() => () => window.clearTimeout(noteTimer.current), [])
 
+  /** Keyboard reordering works across sections: one step up or down the whole list. */
+  const keyMove = (id: string, dir: -1 | 1) => {
+    const list = ranked.filter((r) => r.bucket !== 'skip')
+    const prev = list.map((r) => r.task.id)
+    const i = prev.indexOf(id)
+    const j = i + dir
+    if (i < 0 || j < 0 || j >= prev.length) return
+    const next = [...prev]
+    ;[next[i], next[j]] = [next[j], next[i]]
+    applyReorder(id, prev, next, new Map(list.map((r) => [r.task.id, r])), goals, say)
+    // Keep focus on the moved row's handle as it travels between sections.
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-handle="${id}"]`)?.focus())
+  }
+
   return (
     <Page>
       <LargeTitle accessory={<SettingsButton />}>Tasks</LargeTitle>
@@ -66,7 +80,7 @@ export function TasksScreen() {
           {SECTIONS.map((s) => {
             const items = ranked.filter((r) => r.bucket === s.bucket)
             if (!items.length) return null
-            return <Section key={s.bucket} bucket={s.bucket} label={s.label} items={items} goals={goals} onOpen={setDetail} onNote={say} />
+            return <Section key={s.bucket} bucket={s.bucket} label={s.label} items={items} goals={goals} onOpen={setDetail} onNote={say} onKeyMove={keyMove} />
           })}
         </div>
       )}
@@ -82,6 +96,7 @@ function Section({
   goals,
   onOpen,
   onNote,
+  onKeyMove,
 }: {
   bucket: Bucket
   label: string
@@ -89,6 +104,7 @@ function Section({
   goals: Goal[]
   onOpen: (id: string) => void
   onNote: (text: string) => void
+  onKeyMove: (id: string, dir: -1 | 1) => void
 }) {
   const collapsible = bucket === 'skip'
   const [open, setOpen] = useState(!collapsible)
@@ -104,34 +120,9 @@ function Section({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
-  const commit = (id: string, next = order) => {
+  const commit = (id: string) => {
     dragging.current = false
-    const idx = next.indexOf(id)
-    const prevIdx = before.current.indexOf(id)
-    if (idx === prevIdx) return
-    const r = byId.get(id)
-    if (!r) return
-    const above = next[idx - 1] ? byId.get(next[idx - 1])!.score : null
-    const below = next[idx + 1] ? byId.get(next[idx + 1])!.score : null
-    useApp.getState().reorder(id, above, below, r.score)
-
-    // The engine adapts, and speaks up once if it disagrees.
-    const passed = idx < prevIdx ? before.current.slice(idx, prevIdx).map((x) => byId.get(x)!) : [r]
-    const strong = passed.find((p) => p.factors.urgency >= 0.6 || p.dependents.length > 0 || p.factors.impact >= r.factors.impact + 0.2)
-    if (strong && (idx > prevIdx || strong !== r)) onNote(disagreement(strong, goals))
-    else onNote('Got it. Your order sticks, and similar picks will lean this way.')
-  }
-
-  /** Keyboard reordering: arrow keys on the handle move one step. */
-  const move = (id: string, dir: -1 | 1) => {
-    const i = order.indexOf(id)
-    const j = i + dir
-    if (j < 0 || j >= order.length) return
-    const next = [...order]
-    ;[next[i], next[j]] = [next[j], next[i]]
-    before.current = order
-    setOrder(next)
-    commit(id, next)
+    applyReorder(id, before.current, order, byId, goals, onNote)
   }
 
   const shown = order.map((id) => byId.get(id)).filter((r): r is Ranked => !!r)
@@ -153,8 +144,7 @@ function Section({
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={tBase} className="overflow-hidden">
             <Reorder.Group axis="y" values={order} onReorder={setOrder} className="-mx-3" as="ul">
-              <AnimatePresence initial={false}>
-                {shown.map((r) => (
+              {shown.map((r) => (
                   <Row
                     key={r.task.id}
                     r={r}
@@ -166,16 +156,31 @@ function Section({
                       before.current = order
                     }}
                     onDragEnd={() => commit(r.task.id)}
-                    onMove={(d) => move(r.task.id, d)}
+                    onMove={(d) => onKeyMove(r.task.id, d)}
                   />
                 ))}
-              </AnimatePresence>
             </Reorder.Group>
           </motion.div>
         )}
       </AnimatePresence>
     </section>
   )
+}
+
+/** Commit a manual move: nudge the engine, and let it speak up once if it disagrees. */
+function applyReorder(id: string, prev: string[], next: string[], byId: Map<string, Ranked>, goals: Goal[], say: (t: string) => void) {
+  const idx = next.indexOf(id)
+  const prevIdx = prev.indexOf(id)
+  if (idx === prevIdx || idx < 0) return
+  const r = byId.get(id)
+  if (!r) return
+  const above = next[idx - 1] ? byId.get(next[idx - 1])!.score : null
+  const below = next[idx + 1] ? byId.get(next[idx + 1])!.score : null
+  useApp.getState().reorder(id, above, below, r.score)
+  const passed = idx < prevIdx ? prev.slice(idx, prevIdx).map((x) => byId.get(x)!) : [r]
+  const strong = passed.find((p) => p.factors.urgency >= 0.6 || p.dependents.length > 0 || p.factors.impact >= r.factors.impact + 0.2)
+  if (strong && (idx > prevIdx || strong !== r)) say(disagreement(strong, goals))
+  else say('Got it. Your order sticks, and similar picks will lean this way.')
 }
 
 function disagreement(r: Ranked, goals: Goal[]): string {
@@ -218,7 +223,7 @@ function Row({
   const complete = () => {
     if (checked) return
     setChecked(true)
-    window.setTimeout(() => withUndo('Task completed', () => useApp.getState().completeTask(r.task.id)), 420)
+    window.setTimeout(() => withUndo('Task completed', () => useApp.getState().completeTask(r.task.id)), 620)
   }
   return (
     <Reorder.Item
@@ -227,9 +232,8 @@ function Row({
       dragControls={controls}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, height: 0, transition: tBase }}
+      initial={{ opacity: 0, y: 4 }}
+      animate={checked ? { opacity: 0, height: 0, transition: { ...tBase, delay: 0.3 } } : { opacity: 1, y: 0, height: 'auto' }}
       whileDrag={{ scale: 1.02, boxShadow: '0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.08)', zIndex: 10 }}
       transition={spring}
       className="relative rounded-inner bg-canvas"
@@ -250,6 +254,7 @@ function Row({
         <button
           type="button"
           aria-label={`Reorder ${r.task.title}. Use arrow keys to move`}
+          data-handle={r.task.id}
           onKeyDown={(e) => {
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
               e.preventDefault()

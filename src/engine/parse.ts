@@ -1,4 +1,4 @@
-import * as chrono from 'chrono-node'
+import * as chrono from 'chrono-node/en'
 import { atHour, dayKey } from './time'
 import { capitalize, defaultEffort, guessCategory, jaccard, keywords, overlap, similarity, stem } from './text'
 import type { Category, Goal } from './types'
