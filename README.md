@@ -2,6 +2,8 @@
 
 **An AI task prioritizer that answers one question better than any other tool: _what should I do right now?_**
 
+![What's Next on mobile and desktop, light and dark](docs/showcase.png)
+
 People can list their tasks anywhere. The failure happens at the moment of action: we pick the easy, low-value task because it feels productive, and end the day busy with no meaningful progress. What's Next shows **one** task, says **why** in one sentence, and makes that task the easiest thing to start.
 
 ---
