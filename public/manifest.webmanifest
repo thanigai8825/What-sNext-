@@ -1,0 +1,10 @@
+{
+  "name": "What's Next?",
+  "short_name": "What's Next",
+  "description": "The one thing to do right now, and why.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

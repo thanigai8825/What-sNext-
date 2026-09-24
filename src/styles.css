@@ -1,0 +1,270 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Design tokens. Every value in the app comes from here.
+   Black and white do the heavy lifting; accents carry meaning, never decoration.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  /* Foundation */
+  --bg: #ffffff;
+  --surface: #f7f7f5;
+  --surface-hover: #f1f1ef;
+  --border: #ebebea;
+  --border-strong: #e3e3e1;
+
+  /* Text — three levels. Tertiary is tuned to pass WCAG AA (4.5:1) on both
+     background and surface; #A3A3A3 is kept for placeholders, disabled
+     states and decorative marks, which carry no information on their own. */
+  --text-primary: #191919;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #707070;
+  --text-faint: #a3a3a3;
+
+  /* Buttons */
+  --primary: #191919;
+  --on-primary: #ffffff;
+  --secondary: #ffffff;
+  --on-secondary: #191919;
+
+  --focus-ring: rgb(25 25 25 / 0.2);
+  --overlay: rgb(255 255 255 / 0.8);
+  --chrome: rgb(255 255 255 / 0.8);
+  --shimmer: #f1f1ef;
+  --shimmer-glint: #f7f7f5;
+  --toast: #191919;
+  --on-toast: #ffffff;
+
+  /* Soft accents — pastel background + muted darker text of the same hue */
+  --sage-bg: #eaf2ec;
+  --sage: #3f6b4e;
+  --sage-fill: #6f9a7d;
+  --sky-bg: #e9eff7;
+  --sky: #3b5e85;
+  --sand-bg: #f6f0e3;
+  --sand: #86672e;
+  --blush-bg: #f8ecea;
+  --blush: #94504a;
+  --lavender-bg: #efecf7;
+  --lavender: #5e5186;
+}
+
+.dark {
+  color-scheme: dark;
+
+  --bg: #191919;
+  --surface: #202020;
+  --surface-hover: #262626;
+  --border: #2c2c2c;
+  --border-strong: #333333;
+
+  --text-primary: #ededed;
+  --text-secondary: #9b9b9b;
+  --text-tertiary: #8a8a8a;
+  --text-faint: #6b6b6b;
+
+  --primary: #ededed;
+  --on-primary: #191919;
+  --secondary: #191919;
+  --on-secondary: #ededed;
+
+  --focus-ring: rgb(237 237 237 / 0.25);
+  --overlay: rgb(25 25 25 / 0.8);
+  --chrome: rgb(25 25 25 / 0.8);
+  --shimmer: #242424;
+  --shimmer-glint: #2a2a2a;
+  --toast: #ededed;
+  --on-toast: #191919;
+
+  /* Same hues, lifted for dark backgrounds; backgrounds at 12% opacity */
+  --sage-bg: rgb(111 163 131 / 0.12);
+  --sage: #93c4a3;
+  --sage-fill: #7fb08f;
+  --sky-bg: rgb(110 151 198 / 0.12);
+  --sky: #94b6dd;
+  --sand-bg: rgb(194 154 82 / 0.12);
+  --sand: #d6b879;
+  --blush-bg: rgb(201 119 111 / 0.12);
+  --blush: #e3a39c;
+  --lavender-bg: rgb(142 128 194 / 0.12);
+  --lavender: #b6aae0;
+}
+
+@theme inline {
+  /* Only our palette exists. */
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-canvas: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--text-primary);
+  --color-ink-2: var(--text-secondary);
+  --color-ink-3: var(--text-tertiary);
+  --color-faint: var(--text-faint);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--on-secondary);
+  --color-ring: var(--focus-ring);
+  --color-overlay: var(--overlay);
+  --color-chrome: var(--chrome);
+  --color-shimmer: var(--shimmer);
+  --color-toast: var(--toast);
+  --color-on-toast: var(--on-toast);
+  --color-sage: var(--sage);
+  --color-sage-bg: var(--sage-bg);
+  --color-sage-fill: var(--sage-fill);
+  --color-sky: var(--sky);
+  --color-sky-bg: var(--sky-bg);
+  --color-sand: var(--sand);
+  --color-sand-bg: var(--sand-bg);
+  --color-blush: var(--blush);
+  --color-blush-bg: var(--blush-bg);
+  --color-lavender: var(--lavender);
+  --color-lavender-bg: var(--lavender-bg);
+}
+
+@theme {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter Variable", Inter,
+    system-ui, sans-serif;
+
+  /* Type scale — nothing else exists. */
+  --text-*: initial;
+  --text-timer: 72px;
+  --text-timer--line-height: 1;
+  --text-timer--letter-spacing: -0.03em;
+  --text-display: 32px;
+  --text-display--line-height: 38px;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: 24px;
+  --text-title--line-height: 30px;
+  --text-title--letter-spacing: -0.015em;
+  --text-headline: 17px;
+  --text-headline--line-height: 24px;
+  --text-headline--letter-spacing: -0.005em;
+  --text-body: 15px;
+  --text-body--line-height: 22px;
+  --text-caption: 13px;
+  --text-caption--line-height: 18px;
+  --text-micro: 11px;
+  --text-micro--line-height: 14px;
+  --text-micro--letter-spacing: 0.04em;
+
+  /* Three weights, plus 300 reserved for the focus timer. */
+  --font-weight-*: initial;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+
+  --radius-*: initial;
+  --radius-focus: 20px;
+  --radius-card: 14px;
+  --radius-control: 12px;
+  --radius-inner: 10px;
+  --radius-pill: 999px;
+
+  --shadow-*: initial;
+  --shadow-focus: 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 24px rgb(0 0 0 / 0.04);
+
+  --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --animate-shimmer: shimmer 1.6s var(--ease-apple) infinite;
+
+  @keyframes shimmer {
+    0% {
+      background-position: 120% 0;
+    }
+    100% {
+      background-position: -20% 0;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-canvas text-ink font-sans text-body;
+    min-height: 100dvh;
+  }
+  ::selection {
+    background: var(--sky-bg);
+    color: var(--text-primary);
+  }
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: default;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--text-faint);
+  }
+  /* Native pickers: we open them programmatically, their chrome stays hidden */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .glass {
+    background: var(--chrome);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--shimmer) 30%, var(--shimmer-glint) 50%, var(--shimmer) 70%);
+    background-size: 300% 100%;
+    animation: var(--animate-shimmer);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
