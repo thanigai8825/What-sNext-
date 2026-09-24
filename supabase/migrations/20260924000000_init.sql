@@ -47,14 +47,16 @@ create table if not exists public.tasks (
 );
 
 -- "How much did this move things forward?" 0 = little, 1 = some, 2 = a lot
+-- task_id / goal_id are plain references on purpose: learning history outlives
+-- the tasks and goals it came from, and sync never blocks on a deleted parent.
 create table if not exists public.task_ratings (
   id uuid primary key,
   user_id uuid not null references public.users (id) on delete cascade,
-  task_id uuid not null references public.tasks (id) on delete cascade,
+  task_id uuid not null,
   value smallint not null check (value between 0 and 2),
   hour smallint not null check (hour between 0 and 23),
   category text not null default 'other',
-  goal_id uuid references public.goals (id) on delete set null,
+  goal_id uuid,
   keywords text[] not null default '{}',
   effort_minutes integer not null default 30,
   created_at timestamptz not null default now()
@@ -64,7 +66,7 @@ create table if not exists public.task_ratings (
 create table if not exists public.skip_reasons (
   id uuid primary key,
   user_id uuid not null references public.users (id) on delete cascade,
-  task_id uuid not null references public.tasks (id) on delete cascade,
+  task_id uuid not null,
   reason text not null check (reason in ('no_time', 'low_energy', 'blocked', 'not_important')),
   hour smallint not null check (hour between 0 and 23),
   category text not null default 'other',

@@ -144,12 +144,18 @@ const fromKB = (r: Row): KnowledgeBase => ({
   updatedAt: r.updated_at as string,
 })
 
-const toUser = (s: Data, uid: string): Row => ({
-  id: uid,
-  name: s.settings.name || null,
-  profile: { onboarded: s.onboarded, settings: s.settings, meta: s.meta, plans: s.plans, learning: s.learning },
-  updated_at: new Date().toISOString(),
-})
+const toUser = (s: Data, uid: string): Row => {
+  // Device-local bookkeeping stays on the device; it changes every minute.
+  const { lastActiveAt: _a, activeDays: _d, ...meta } = s.meta
+  void _a
+  void _d
+  return {
+    id: uid,
+    name: s.settings.name || null,
+    profile: { onboarded: s.onboarded, settings: s.settings, meta, plans: s.plans, learning: s.learning },
+    updated_at: new Date().toISOString(),
+  }
+}
 
 function rowsOf(s: Data, uid: string): Record<Table, Row[]> {
   return {
@@ -368,9 +374,14 @@ export async function linkEmail(email: string): Promise<{ ok: boolean; message: 
   if (!sb) return { ok: false, message: 'Sync isn’t set up for this app.' }
   const { data } = await sb.auth.getSession()
   const redirect = window.location.origin
-  const res = data.session?.user.is_anonymous
-    ? await sb.auth.updateUser({ email }, { emailRedirectTo: redirect })
-    : await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect } })
+  if (data.session?.user.is_anonymous) {
+    // First device: attach the email to this guest account and keep everything.
+    const linked = await sb.auth.updateUser({ email }, { emailRedirectTo: redirect })
+    if (!linked.error) return { ok: true, message: `Check ${email} for a link to finish.` }
+  }
+  // The email already has an account (another device): sign in to it. This
+  // device's data is merged into it after the link is opened.
+  const res = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect } })
   if (res.error) return { ok: false, message: res.error.message }
   return { ok: true, message: `Check ${email} for a link to finish.` }
 }
@@ -380,3 +391,6 @@ export async function signOut() {
   await sb?.auth.signOut()
   useSync.setState({ state: 'off', email: null })
 }
+
+/** Row mappers, exported for tests. */
+export const mappers = { toGoal, fromGoal, toTask, fromTask, toRating, fromRating, toSkip, fromSkip, toKB, fromKB, sameContent }

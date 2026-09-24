@@ -21,6 +21,7 @@ export function Onboarding() {
   const [step, setStep] = useState(0)
   const [dir, setDir] = useState(1)
   const [kbDrafting, setKbDrafting] = useState(false)
+  const [sorting, setSorting] = useState(false)
   const go = (n: number) => {
     setDir(n > step ? 1 : -1)
     setStep(n)
@@ -31,7 +32,7 @@ export function Onboarding() {
       <header className="mx-auto flex h-16 w-full max-w-[560px] items-center px-4 md:mt-6">
         <div className="w-11">
           <AnimatePresence>
-            {step > 0 && (
+            {step > 0 && !sorting && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <IconButton icon={ChevronLeft} label="Back" onClick={() => go(step - 1)} />
               </motion.div>
@@ -78,7 +79,7 @@ export function Onboarding() {
             {step === 0 && <Welcome onNext={() => go(1)} />}
             {step === 1 && <Goals onNext={() => go(2)} />}
             {step === 2 && <Knowledge onNext={() => go(3)} onDrafting={setKbDrafting} />}
-            {step === 3 && <FirstTasks />}
+            {step === 3 && <FirstTasks onSorting={() => setSorting(true)} />}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -348,7 +349,7 @@ function Knowledge({ onNext, onDrafting }: { onNext: () => void; onDrafting: (v:
 
 // ── 4. First tasks ───────────────────────────────────────────────────────────
 
-function FirstTasks() {
+function FirstTasks({ onSorting }: { onSorting: () => void }) {
   const navigate = useNavigate()
   const goals = useApp((s) => s.goals)
   const dayEndHour = useApp((s) => s.settings.dayEndHour)
@@ -362,6 +363,7 @@ function FirstTasks() {
   const go = async () => {
     const lines = splitLines(text)
     if (!lines.length) return
+    onSorting()
     const parsed = parseTaskList(text, { now: new Date(), goals, dayEndHour })
     const created = useApp.getState().addParsedTasks(parsed)
     setIds(created)

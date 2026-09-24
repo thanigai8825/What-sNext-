@@ -442,7 +442,14 @@ export const useApp = create<AppState>()(
           set({ focus: null })
         },
 
-        applyAI: (insights) => set((s) => ({ ai: { ...s.ai, ...insights } })),
+        applyAI: (insights) =>
+          set((s) => {
+            // Keep the cache to tasks that still exist.
+            const ids = new Set(s.tasks.map((t) => t.id))
+            const ai: Record<string, AIInsight> = {}
+            for (const [id, v] of Object.entries({ ...s.ai, ...insights })) if (ids.has(id)) ai[id] = v
+            return { ai }
+          }),
 
         snapshot: () => {
           const s = get()

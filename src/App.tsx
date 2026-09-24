@@ -124,6 +124,8 @@ function useTheme() {
     const apply = () => {
       const dark = theme === 'dark' || (theme === 'system' && mq.matches)
       const root = document.documentElement
+      // Browser chrome follows the chosen theme, not just the system one.
+      document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', dark ? '#191919' : '#FFFFFF'))
       if (root.classList.contains('dark') === dark) return
       const flip = () => root.classList.toggle('dark', dark)
       const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown }
