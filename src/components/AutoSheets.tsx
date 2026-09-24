@@ -6,7 +6,7 @@ import { rankAt } from '../engine/score'
 import { addDays, atHour, dayKey, effortLabel, parseHm } from '../engine/time'
 import { tBase } from '../lib/motion'
 import { engineInput, useApp } from '../store/app'
-import { useUI } from '../store/ui'
+import { useUI, withUndo } from '../store/ui'
 
 /**
  * Sheets the app offers on its own — never more than one, never on a busy moment:
@@ -75,9 +75,10 @@ export function EveningCheck({ open, onClose, day }: { open: boolean; onClose: (
     onClose()
   }
   const pick = (id: string) => {
-    useApp.getState().setPlan(key, id)
-    useApp.getState().markEveningChecked()
-    useUI.getState().showToast(`Set. ${label} starts with a clear first step.`)
+    withUndo(`Set. ${label} starts with a clear first step.`, () => {
+      useApp.getState().setPlan(key, id)
+      useApp.getState().markEveningChecked()
+    })
     setChoosing(false)
     onClose()
   }

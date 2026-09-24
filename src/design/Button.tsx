@@ -38,9 +38,9 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
       className={cn(base, variants[variant], full && 'w-full', className)}
       {...rest}
     >
-      {Icon && <Icon size={variant === 'text' ? 18 : 20} strokeWidth={1.5} aria-hidden />}
+      {Icon && <Icon size={variant === 'text' ? 18 : 20} strokeWidth={1.5} aria-hidden className="shrink-0" />}
       {children}
-      {IconRight && <IconRight size={18} strokeWidth={1.5} aria-hidden />}
+      {IconRight && <IconRight size={18} strokeWidth={1.5} aria-hidden className="shrink-0" />}
       {kbd && (
         <kbd
           className={cn(

@@ -81,7 +81,7 @@ export function KnowledgeImport({ onImport, primaryLabel = 'Import' }: { onImpor
           <Button
             key={a.name}
             variant="secondary"
-            className="h-11 px-2 text-caption md:h-10"
+            className="h-11 gap-1 px-2 text-caption md:h-10"
             iconRight={ArrowUpRight}
             onClick={() => {
               void doCopy()

@@ -26,7 +26,7 @@ export function ReviewScreen() {
 
   return (
     <Page>
-      <LargeTitle accessory={<SettingsButton />}>Your week.</LargeTitle>
+      <LargeTitle accessory={<SettingsButton />}>Your week</LargeTitle>
 
       {week.doneCount === 0 ? (
         <div className="flex flex-col items-start gap-5">
@@ -42,7 +42,7 @@ export function ReviewScreen() {
               {week.highValueShare}%
             </motion.p>
             <p className="mt-1 text-headline text-ink-2">of your time went to high-value work</p>
-            <ProgressBar value={week.highValueShare} from={0} delay={0.2} className="mt-6 h-2" label="High-value share" />
+            <ProgressBar value={week.highValueShare} from={0} delay={0.2} className="mt-6" label="High-value share" />
             <p className="mt-3 text-caption text-ink-3">
               {plural(week.doneCount, 'task')} finished · {durationLabel(week.minutes * 60_000)} of work
             </p>

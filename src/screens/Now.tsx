@@ -132,7 +132,14 @@ export function NowScreen() {
       </AnimatePresence>
 
       {upNext.length > 0 && phase.kind === 'idle' && (
-        <motion.section layout="position" transition={tSlow} className="mt-12" aria-labelledby="up-next">
+        <motion.section
+          layout="position"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0, transition: { ...tSlow, delay: 0.22 } }}
+          transition={tSlow}
+          className="mt-12"
+          aria-labelledby="up-next"
+        >
           <MicroLabel as="h2" className="mb-2">
             <span id="up-next">Up next</span>
           </MicroLabel>
@@ -179,6 +186,7 @@ function FocusCard({
   const [why, setWhy] = useState(false)
   const goal = useApp((s) => (task.goalId ? s.goals.find((g) => g.id === task.goalId) : null))
   const aiEnabled = useUI((s) => s.aiEnabled)
+  const inFocus = useApp((s) => s.focus?.taskId === task.id)
   const partial = useUI((s) => s.aiPartial[task.id])
   const done = celebrating !== undefined
 
@@ -223,7 +231,7 @@ function FocusCard({
         </div>
 
         <Button full className="mt-6" onClick={onStart} kbd="Space" disabled={done}>
-          Start
+          {inFocus ? 'Resume' : 'Start'}
         </Button>
 
         <div className="mt-2 flex items-center justify-center">

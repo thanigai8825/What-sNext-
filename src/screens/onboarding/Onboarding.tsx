@@ -20,6 +20,7 @@ const STEPS = 4
 export function Onboarding() {
   const [step, setStep] = useState(0)
   const [dir, setDir] = useState(1)
+  const [kbDrafting, setKbDrafting] = useState(false)
   const go = (n: number) => {
     setDir(n > step ? 1 : -1)
     setStep(n)
@@ -40,7 +41,24 @@ export function Onboarding() {
         <div className="flex flex-1 justify-center">
           <ProgressDots count={STEPS} index={step} />
         </div>
-        <div className="w-11" />
+        <div className="flex w-11 justify-end">
+          <AnimatePresence>
+            {step === 2 && !kbDrafting && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="-mr-3">
+                <Button
+                  variant="text"
+                  className="text-caption"
+                  onClick={() => {
+                    if (!useApp.getState().kb) useApp.getState().skipKB()
+                    go(3)
+                  }}
+                >
+                  Skip for now
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </header>
       <main className="relative mx-auto flex w-full max-w-[560px] flex-1 flex-col px-6 pb-[calc(24px+env(safe-area-inset-bottom))]">
         <AnimatePresence mode="wait" custom={dir} initial={false}>
@@ -59,7 +77,7 @@ export function Onboarding() {
           >
             {step === 0 && <Welcome onNext={() => go(1)} />}
             {step === 1 && <Goals onNext={() => go(2)} />}
-            {step === 2 && <Knowledge onNext={() => go(3)} />}
+            {step === 2 && <Knowledge onNext={() => go(3)} onDrafting={setKbDrafting} />}
             {step === 3 && <FirstTasks />}
           </motion.div>
         </AnimatePresence>
@@ -270,9 +288,12 @@ function GoalField({
 
 // ── 3. Knowledge base ────────────────────────────────────────────────────────
 
-function Knowledge({ onNext }: { onNext: () => void }) {
-  const [draft, setDraft] = useState<{ raw: string; fields: KBField[] } | null>(null)
-  const existing = useApp((s) => s.kb)
+function Knowledge({ onNext, onDrafting }: { onNext: () => void; onDrafting: (v: boolean) => void }) {
+  const [draft, setDraftState] = useState<{ raw: string; fields: KBField[] } | null>(null)
+  const setDraft = (d: typeof draft) => {
+    setDraftState(d)
+    onDrafting(!!d)
+  }
 
   if (draft) {
     const update = (fields: KBField[]) => setDraft({ ...draft, fields })
@@ -320,28 +341,12 @@ function Knowledge({ onNext }: { onNext: () => void }) {
             window.scrollTo({ top: 0 })
           }}
         />
-        <div className="mt-2 flex justify-center">
-          <Button
-            variant="text"
-            onClick={() => {
-              if (!existing) useApp.getState().skipKB()
-              onNext()
-            }}
-          >
-            {existing ? 'Keep my current profile' : 'Skip for now'}
-          </Button>
-        </div>
       </div>
     </>
   )
 }
 
 // ── 4. First tasks ───────────────────────────────────────────────────────────
-
-const TASKS_PLACEHOLDER = `Send proposal to Arun by Friday, 1 hr
-Draft case study for portfolio
-Clean up inbox
-Book dentist appointment`
 
 function FirstTasks() {
   const navigate = useNavigate()
@@ -401,7 +406,7 @@ function FirstTasks() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: chosen && !isChosen ? 0.35 : 1, y: 0, scale: isChosen ? 1.02 : 1 }}
                   transition={{ ...spring, opacity: tBase, delay: sorted ? 0 : i * 0.06 }}
-                  className={cn('rounded-card px-4 py-3.5 transition-colors duration-500', isChosen ? 'bg-surface shadow-focus' : 'bg-surface/0')}
+                  className={cn('relative rounded-card px-4 py-3.5 transition-colors duration-500', isChosen ? 'z-10 bg-surface shadow-focus' : 'bg-canvas')}
                 >
                   <p className={cn('text-body', isChosen ? 'font-semibold text-ink' : 'text-ink')}>{t.title}</p>
                   <p className="mt-0.5 text-caption text-ink-2">
@@ -419,9 +424,9 @@ function FirstTasks() {
 
   return (
     <>
-      <StepTitle title="What’s on your plate?" detail="Paste a list or type one per line. Deadlines and effort are picked up for you." />
+      <StepTitle title="What’s on your plate?" detail="Deadlines, effort and goals are picked up for you." />
       <div className="mt-10">
-        <TextArea data-autofocus minRows={7} value={text} onChange={(e) => setText(e.target.value)} placeholder={TASKS_PLACEHOLDER} aria-label="Your tasks" />
+        <TextArea data-autofocus minRows={7} value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste a list or type one per line" aria-label="Your tasks" />
         <MicroLabel className="mt-3 h-4">{count ? `${count} ${count === 1 ? 'task' : 'tasks'}` : ''}</MicroLabel>
       </div>
       <Footer>

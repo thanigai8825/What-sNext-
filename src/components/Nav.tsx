@@ -39,7 +39,7 @@ export function TabBar() {
                 className={cn('flex h-full flex-col items-center justify-center gap-1 transition-colors duration-200', active ? 'text-ink' : 'text-ink-3')}
               >
                 <motion.span animate={{ y: active ? -1 : 0, scale: active ? 1.04 : 1 }} transition={spring}>
-                  <Icon size={22} strokeWidth={active ? 1.9 : 1.5} aria-hidden />
+                  <Icon size={20} strokeWidth={1.5} aria-hidden />
                 </motion.span>
                 <span className="text-micro font-medium">{item.label}</span>
               </NavLink>
