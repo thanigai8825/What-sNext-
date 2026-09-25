@@ -80,7 +80,9 @@ function Shell() {
     return () => window.removeEventListener('keydown', onKey)
   }, [chrome])
 
-  useEffect(() => window.scrollTo(0, 0), [section])
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [section])
 
   if (!onboarded && path !== '/welcome') return <Navigate to="/welcome" replace />
   if (onboarded && path === '/welcome') return <Navigate to="/" replace />
