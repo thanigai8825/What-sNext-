@@ -84,6 +84,23 @@ Reasons are chosen by what actually drives the score, for example "Sending this 
 
 **Goal progress** is effort-weighted and keeps honest room for work nobody has written down yet. Finishing every listed task gets a goal close to done; only you mark it achieved.
 
+## First run
+
+Three steps, about two minutes, ending on the first answer.
+
+1. **The problem, in four seconds.** "You have big goals. But small stuff fills your day." A small animated day shows the easy tasks that feel productive, the one that matters, and the card What's Next would show for it.
+2. **Let your AI set this up.** ChatGPT, Claude and Gemini already know your goals and habits.
+   - *Copy the prompt*: one bar with Copy prompt and Show prompt (a scrollable overlay).
+   - *Ask your AI*: each button copies the prompt and opens ChatGPT, Claude or Gemini (ChatGPT and Claude open with it already typed).
+   - *Paste the answer here*: one tap. The prompt asks for a single code block, so the chat app's Copy button takes the whole answer at once.
+
+   What the app learned comes back as short chips phrased as what it will do: *We'll put these first*, *We'll nudge you on these*, *We'll keep these out of your way*, *We'll save deep work for mornings*. Tap one to remove it. Skipping is fine; the offer returns after three days, and Settings → Knowledge base can import a new answer at any time.
+3. **What are you working toward?** Goals and their steps on one screen, already filled in from the answer.
+   - One field per task, like a checklist. Enter adds the next row, Backspace on an empty row removes it, and a pasted list becomes rows.
+   - Dates and effort are read from the words ("by Friday, 1 hr") and shown under each row. "By Oct 2026" means the end of October.
+
+Then every task lands, sorts, and the one that matters most lifts out. Going back never loses anything: the draft is saved as you type.
+
 ## The loop
 
 - **Trigger.** Opening the app answers the question immediately. There is an optional morning notification ("Your first task today is ready"), and after 30+ minutes away the card says "Welcome back".
@@ -109,7 +126,7 @@ Tokens live in `src/styles.css` as CSS variables and are exposed to Tailwind v4 
 - **Hierarchy:** one hero and one primary action per screen, three text levels, at most two accents visible.
 - **Accessibility:** WCAG AA contrast in both themes (verified with axe), full keyboard use, 44px touch targets, and focus trapping in sheets.
 
-> **Tertiary text.** `#A3A3A3` measures 2.5:1 on white, which fails AA for small text. It is used for placeholders, disabled states and decorative marks. Tertiary *text* uses `#707070` (4.6:1 on the surface color). The variable is `--text-tertiary` if you prefer the lighter tone.
+> **Tertiary text.** `#A3A3A3` measures 2.5:1 on white, which fails AA for small text. It is used for placeholders, disabled states and decorative marks. Tertiary *text* uses `#6E6E6E`, which keeps 4.5:1 even on a hovered surface (`#8E8E8E` in dark mode). The variable is `--text-tertiary` if you prefer the lighter tone.
 
 ### Keyboard
 

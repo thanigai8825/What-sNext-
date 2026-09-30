@@ -2,7 +2,8 @@ import { aiKey } from '../engine/aiKey'
 import { KB_FIELDS } from '../engine/kb'
 import { availableMinutes, currentEnergy, rank } from '../engine/score'
 import { pad } from '../engine/time'
-import type { AIInsight, Category, KBSignals, KnowledgeBase, Task } from '../engine/types'
+import type { ProfileAnalysis } from '../engine/kb'
+import type { AIInsight, Category, KnowledgeBase, Task } from '../engine/types'
 import { engineInput, useApp } from '../store/app'
 import { useUI } from '../store/ui'
 import { checkAI, partialField, streamNDJSON } from './client'
@@ -219,15 +220,59 @@ async function runRanking() {
 
 // ── Profile ──────────────────────────────────────────────────────────────────
 
+interface ProfileAI {
+  goals?: Array<{ title?: unknown; deadline?: unknown }>
+  nextSteps?: Array<{ title?: unknown; goal?: unknown }>
+  highValue?: unknown
+  avoid?: unknown
+  busywork?: unknown
+  peak?: unknown
+}
+
+const phraseList = (x: unknown) =>
+  Array.isArray(x) ? [...new Set(x.filter((v): v is string => typeof v === 'string').map((v) => v.toLowerCase().trim()).filter(Boolean))].slice(0, 12) : []
+
+function toAnalysis(ai: ProfileAI): ProfileAnalysis {
+  const goals = (Array.isArray(ai.goals) ? ai.goals : [])
+    .filter((g) => typeof g?.title === 'string' && g.title.trim())
+    .slice(0, 3)
+    .map((g) => ({
+      title: (g.title as string).trim(),
+      deadline: typeof g.deadline === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(g.deadline) ? g.deadline : null,
+    }))
+  const steps = (Array.isArray(ai.nextSteps) ? ai.nextSteps : []).filter((s) => typeof s?.title === 'string' && s.title.trim()).slice(0, 8)
+  const peak =
+    Array.isArray(ai.peak) && ai.peak.length === 2 && ai.peak.every((n) => typeof n === 'number' && n >= 0 && n <= 24) && ai.peak[1] > ai.peak[0]
+      ? (ai.peak as [number, number])
+      : null
+  return {
+    goals,
+    nextSteps: steps.map((s) => (s.title as string).trim()),
+    stepGoals: steps.map((s) => (typeof s.goal === 'number' && s.goal >= 0 && s.goal < goals.length ? s.goal : null)),
+    signals: { highValue: phraseList(ai.highValue), avoid: phraseList(ai.avoid), busywork: phraseList(ai.busywork), peak },
+  }
+}
+
+/** Claude's reading of a pasted profile: short goals, next steps mapped to goals, and habits. */
+export async function analyzeProfileWithAI(raw: string, signal?: AbortSignal) {
+  if (!aiOn() || !raw.trim()) return null
+  try {
+    const [first] = await streamNDJSON<ProfileAI>('profile', { today: localStamp(), profile: raw.slice(0, 12_000) }, { signal })
+    return first ? toAnalysis(first) : null
+  } catch {
+    return null
+  }
+}
+
+/** Sharpen the saved profile's signals (used after importing from Settings). */
 export async function refineProfile() {
   const kb = useApp.getState().kb
   if (!aiOn() || !kb) return
   try {
-    const [first] = await streamNDJSON<Partial<KBSignals>>('profile', { profile: profileText(kb) })
+    const [first] = await streamNDJSON<ProfileAI>('profile', { today: localStamp(), profile: profileText(kb) })
     if (!first) return
-    const list = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string').map((v) => v.toLowerCase().trim()) : [])
-    const peak = Array.isArray(first.peak) && first.peak.length === 2 && first.peak.every((n) => typeof n === 'number') ? (first.peak as [number, number]) : null
-    useApp.getState().mergeKBSignals({ highValue: list(first.highValue), avoid: list(first.avoid), busywork: list(first.busywork), peak })
+    const { signals } = toAnalysis(first)
+    useApp.getState().mergeKBSignals({ ...signals, peak: signals.peak ?? undefined })
   } catch {
     /* local signals stand */
   }

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { validInsights } from '../engine/aiKey'
 import { newGoal, newTask } from '../engine/factory'
-import { deriveSignals } from '../engine/kb'
+import { deriveSignals, type ProfileAnalysis } from '../engine/kb'
 import { resolveAfter, type ParsedTask } from '../engine/parse'
 import { pickReward, type Reward, type RewardKind } from '../engine/rewards'
 import { rank } from '../engine/score'
@@ -59,8 +59,55 @@ export interface FocusSession {
   banked: number
 }
 
+export interface PlanGoal {
+  id: string
+  text: string
+  /** undefined: read it from the text; null: none; YYYY-MM-DD: picked */
+  deadline?: string | null
+  steps: string[]
+}
+
+export interface PlanDraft {
+  goals: PlanGoal[]
+  /** Tasks that don't belong to a goal. */
+  other: string[]
+  /** Where the plan came from. A person's own edits are never overwritten. */
+  source: 'empty' | 'profile' | 'user'
+  /** Filled in from their AI's answer; stays true through their edits. */
+  fromAI?: boolean
+}
+
+/** Everything typed during onboarding, kept so going back never loses anything. */
+export interface OnboardingDraft {
+  step: number
+  kbRaw: string
+  kbStage: 'import' | 'review'
+  /** Claude's reading of kbRaw, and a hash of the text it read. */
+  kbAI: ProfileAnalysis | null
+  kbAIFor: string | null
+  /** "kind:phrase" habits the person removed on the review screen. */
+  removed: string[]
+  plan: PlanDraft
+  /** Tasks created from the plan; set while the reveal plays. */
+  createdIds: string[] | null
+}
+
+export const emptyPlan = (): PlanDraft => ({ goals: [{ id: uid(), text: '', steps: [] }], other: [], source: 'empty' })
+
+const initialOnboarding = (): OnboardingDraft => ({
+  step: 0,
+  kbRaw: '',
+  kbStage: 'import',
+  kbAI: null,
+  kbAIFor: null,
+  removed: [],
+  plan: emptyPlan(),
+  createdIds: null,
+})
+
 export interface Data {
   onboarded: boolean
+  onboarding: OnboardingDraft
   goals: Goal[]
   tasks: Task[]
   ratings: Rating[]
@@ -77,10 +124,13 @@ export interface Data {
   currentId: string | null
 }
 
-export type Snapshot = Omit<Data, 'settings'>
+export type Snapshot = Omit<Data, 'settings' | 'onboarding'>
 
 interface Actions {
   finishOnboarding(): void
+  setOnboarding(patch: Partial<OnboardingDraft>): void
+  /** Edit the plan as the person; marks it as theirs. */
+  editPlan(fn: (plan: PlanDraft) => PlanDraft): void
   setGoalsFromOnboarding(goals: Array<{ title: string; deadline: string | null }>): void
   addGoal(title: string, deadline: string | null): string
   updateGoal(id: string, patch: Partial<Pick<Goal, 'title' | 'deadline' | 'completedAt'>>): void
@@ -99,6 +149,7 @@ interface Actions {
   updateKBField(key: KBFieldKey, patch: Partial<KBField>): void
   removeKBField(key: KBFieldKey): void
   mergeKBSignals(signals: Partial<KBSignals>): void
+  setKBSignals(signals: KBSignals): void
   deleteKB(): void
   skipKB(): void
   markKBReoffered(): void
@@ -140,6 +191,7 @@ export const DEFAULT_SETTINGS: Settings = {
 function initialData(): Data {
   return {
     onboarded: false,
+    onboarding: initialOnboarding(),
     goals: [],
     tasks: [],
     ratings: [],
@@ -217,7 +269,9 @@ export const useApp = create<AppState>()(
       return {
         ...initialData(),
 
-        finishOnboarding: () => set((s) => ({ onboarded: true, meta: { ...s.meta, onboardedAt: nowIso() } })),
+        finishOnboarding: () => set((s) => ({ onboarded: true, onboarding: initialOnboarding(), meta: { ...s.meta, onboardedAt: nowIso() } })),
+        setOnboarding: (patch) => set((s) => ({ onboarding: { ...s.onboarding, ...patch } })),
+        editPlan: (fn) => set((s) => ({ onboarding: { ...s.onboarding, plan: { ...fn(s.onboarding.plan), source: 'user' } } })),
 
         setGoalsFromOnboarding: (list) => {
           const existing = get().goals
@@ -410,6 +464,8 @@ export const useApp = create<AppState>()(
             }
           }),
 
+        setKBSignals: (signals) => set((s) => (s.kb ? { kb: { ...s.kb, signals, updatedAt: nowIso() }, currentId: null } : {})),
+
         deleteKB: () => set({ kb: null, currentId: null }),
         skipKB: () => set((s) => ({ meta: { ...s.meta, kbSkippedAt: s.meta.kbSkippedAt ?? nowIso() } })),
         markKBReoffered: () => set((s) => ({ meta: { ...s.meta, kbReoffered: true } })),
@@ -467,7 +523,7 @@ export const useApp = create<AppState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => {
         const out = {} as Record<string, unknown>
-        for (const k of [...SNAPSHOT_KEYS, 'settings'] as const) out[k] = s[k]
+        for (const k of [...SNAPSHOT_KEYS, 'settings', 'onboarding'] as const) out[k] = s[k]
         return out as unknown as Data
       },
       merge: (persisted, current) => {
@@ -476,6 +532,7 @@ export const useApp = create<AppState>()(
           ...current,
           ...p,
           settings: { ...DEFAULT_SETTINGS, ...(p.settings ?? {}) },
+          onboarding: { ...initialOnboarding(), ...(p.onboarding ?? {}) },
           meta: { ...current.meta, ...(p.meta ?? {}) },
         }
       },

@@ -1,6 +1,6 @@
 export { Button, IconButton } from './Button'
 export { Pill, toneClass, type Tone } from './Pill'
-export { Input, TextArea } from './Field'
+export { Input, LineField, TextArea } from './Field'
 export { MicroLabel, LargeTitle, Page } from './Typography'
 export { ProgressBar } from './ProgressBar'
 export { Skeleton, SkeletonLines } from './Skeleton'

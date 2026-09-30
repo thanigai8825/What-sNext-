@@ -72,6 +72,7 @@ export function findEffort(text: string): Found | null {
 // ── Dates ────────────────────────────────────────────────────────────────────
 
 const AMBIGUOUS_DATE_WORDS = new Set(['may', 'march', 'sat', 'sun', 'wed', 'second', 'now', 'mon', 'fri', 'jan', 'june'])
+const MONTH_ONLY = /^(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?(?:,?\s+\d{4})?$/
 
 interface FoundDate {
   date: Date
@@ -114,11 +115,25 @@ export function findDate(text: string, now: Date, dayEndHour = 18): FoundDate | 
     }
     // Relative durations like "in 2 hours" are effort, not deadlines, in a task list.
     if (/^in\s+\d/.test(lower) && /(hour|min)/.test(lower)) continue
+    // Rates and durations, not deadlines: "₹1L a month", "run 5k a week", "2 years of experience".
+    // ("in a month" and "within a year" still count.)
+    if (/^(?:a|an|one|per|each|every|\d+)\s+(?:day|week|month|year|hour|minute|min)s?$/.test(lower)) continue
     const hasTime = r.start.isCertain('hour')
     let date = r.start.date()
-    if (!hasTime) date = atHour(date, dayEndHour)
     let start = r.index
-    const lead = /\b(?:by|on|before|due|until|till|for|at|this)\s+$/i.exec(text.slice(0, start))
+    // A month without a day ("by Oct 2026", "mid-November") means the end of it, not the 1st.
+    const monthOnly = MONTH_ONLY.test(lower)
+    if (monthOnly) {
+      const part = /\b(early|mid|late|end\s+of(?:\s+the)?|beginning\s+of|start\s+of|before)[\s-]*$/i.exec(text.slice(0, start))
+      const when = part?.[1].toLowerCase() ?? ''
+      const m = date.getMonth()
+      // "by October" said in mid-October means this October, not next year's.
+      const y = !r.start.isCertain('year') && m === now.getMonth() ? now.getFullYear() : date.getFullYear()
+      date = /^(?:early|beginning|start)/.test(when) ? new Date(y, m, 7) : when === 'mid' ? new Date(y, m, 15) : when === 'before' ? new Date(y, m, 0) : new Date(y, m + 1, 0)
+      if (part) start = part.index
+    }
+    if (!hasTime) date = atHour(date, dayEndHour)
+    const lead = (monthOnly ? /\b(?:by|before|due|until|till|in|during|this)\s+$/i : /\b(?:by|on|before|due|until|till|for|at|this)\s+$/i).exec(text.slice(0, start))
     if (lead) start = lead.index
     return { date, hasTime, start, end: r.index + r.text.length, text: r.text }
   }

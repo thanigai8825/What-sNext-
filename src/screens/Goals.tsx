@@ -86,7 +86,7 @@ function GoalCard({
         <span className="pt-0.5 text-caption font-medium text-ink tabular">{progress}%</span>
       </div>
       <p className="mt-0.5 text-caption text-ink-2">
-        {goal.deadline ? `Due ${dateLabel(goal.deadline, now)}${days !== null && days > 1 ? ` · ${days} days left` : ''}` : 'No deadline'}
+        {goal.deadline ? `Due ${dateLabel(goal.deadline, now, true)}${days !== null && days > 1 ? ` · ${days} days left` : ''}` : 'No deadline'}
       </p>
       <ProgressBar value={progress} className="mt-4" label={`${goal.title} progress`} />
       {planned && <p className="mt-2 text-caption text-ink-2">Every planned step is done. Add what’s next, or mark it achieved.</p>}

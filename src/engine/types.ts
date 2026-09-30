@@ -70,7 +70,16 @@ export interface SkipEvent {
   createdAt: string
 }
 
-export type KBFieldKey = 'goals' | 'role' | 'highValue' | 'avoidance' | 'energy' | 'constraints' | 'style'
+export type KBFieldKey =
+  | 'goals'
+  | 'nextSteps'
+  | 'highValue'
+  | 'avoidance'
+  | 'busywork'
+  | 'energy'
+  | 'constraints'
+  | 'role'
+  | 'style'
 
 export interface KBField {
   key: KBFieldKey

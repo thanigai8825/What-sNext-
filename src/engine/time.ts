@@ -67,13 +67,15 @@ export function weekdayName(d: Date): string {
   return WEEKDAYS[d.getDay()]
 }
 
-export function dateLabel(key: string, now: Date): string {
+/** "Today", "Friday", "Oct 31", "Sep 30, 2027". After "By" or "Due", pass inline for "tomorrow". */
+export function dateLabel(key: string, now: Date, inline = false): string {
   const d = fromDayKey(key)
   const diff = daysBetween(now, d)
-  if (diff === 0) return 'Today'
-  if (diff === 1) return 'Tomorrow'
+  if (diff === 0) return inline ? 'today' : 'Today'
+  if (diff === 1) return inline ? 'tomorrow' : 'Tomorrow'
   if (diff > 1 && diff < 7) return WEEKDAYS[d.getDay()]
-  return `${MONTHS[d.getMonth()]} ${d.getDate()}`
+  const year = d.getFullYear() !== now.getFullYear() ? `, ${d.getFullYear()}` : ''
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}${year}`
 }
 
 export function timeLabel(d: Date): string {

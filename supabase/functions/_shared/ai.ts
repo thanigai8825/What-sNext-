@@ -61,13 +61,16 @@ ${FORMAT}`,
       }
     case 'profile':
       return {
-        system: `You read a person's self-description for a task-prioritization app and extract matching signals.
+        system: `You read a person's self-description for "What's Next?", an app that tells them which task to do first, and turn it into what the app needs.
 Output exactly one line:
-{"highValue": short phrases (1–3 words) naming work that moves their goals, "avoid": short phrases for important work they tend to put off, "busywork": short phrases for low-value work they use to feel productive, "peak": [startHour, endHour] in 24h local time when they focus best, or null}
-Use their own words where possible. Empty arrays are fine.
+{"goals": up to 3 objects {"title": the goal in at most 8 plain words, no dates, "deadline": "YYYY-MM-DD" or null}, most important first,
+ "nextSteps": up to 8 objects {"title": one concrete task in at most 10 words (keep deadline words like "by Friday"), "goal": index of the goal it serves, or null},
+ "highValue": 1–4 word phrases for work that moves their goals, "avoid": 1–4 word phrases for important things they put off, "busywork": 1–4 word phrases for things they do to feel busy,
+ "peak": [startHour, endHour] in 24h local time when they focus best, or null}
+Use their own words where you can, in plain English. Resolve deadlines against "today"; a month without a day means its last day ("by Oct 2026" is 2026-10-31). Empty arrays are fine; never invent.
 ${FORMAT}`,
         user: data,
-        maxTokens: 800,
+        maxTokens: 1500,
       }
   }
 }

@@ -131,11 +131,14 @@ function KBReoffer({ open, onClose }: { open: boolean; onClose: () => void }) {
     onClose()
   }
   return (
-    <Sheet open={open} onClose={done} label="Help What’s Next know you">
+    <Sheet open={open} onClose={done} label="Let your AI tailor your picks">
       <div className="mb-4">
-        <Pill tone="lavender">Optional · 2 minutes</Pill>
+        <Pill tone="lavender">Recommended · 2 minutes</Pill>
       </div>
-      <SheetHeader title="Want sharper picks?" detail="Help What’s Next know you. Paste a short profile from the AI you already use. It stays private." />
+      <SheetHeader
+        title="Let your AI tailor your picks."
+        detail="ChatGPT, Claude and Gemini already know your goals and habits. Paste one answer, and your picks will fit your real life. It stays private."
+      />
       <Button
         full
         data-autofocus

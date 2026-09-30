@@ -80,6 +80,17 @@ describe('parseTaskLine', () => {
     expect(g.title).toBe('Launch portfolio')
     expect(g.deadline).toBe('2026-10-30')
   })
+
+  it('reads a month without a day as the end of that month', () => {
+    expect(parseGoalInput('Land a design role by Oct 2026', NOW)).toMatchObject({ title: 'Land a design role', deadline: '2026-10-31' })
+    expect(parseGoalInput('Ship the redesign in November', NOW)).toMatchObject({ title: 'Ship the redesign', deadline: '2026-11-30' })
+    expect(parseGoalInput('Run a 10k by mid-December', NOW)).toMatchObject({ title: 'Run a 10k', deadline: '2026-12-15' })
+    expect(parseGoalInput('Move house before January', NOW)).toMatchObject({ title: 'Move house', deadline: '2026-12-31' })
+    // Said during September, "by September" is this month.
+    expect(parseGoalInput('Finish the course by September', NOW).deadline).toBe('2026-09-30')
+    // "in" only counts before a month: "check in tomorrow" keeps its verb.
+    expect(parseTaskLine('Check in with Sam tomorrow', { now: NOW, goals }).title).toBe('Check in with Sam')
+  })
 })
 
 describe('rank', () => {
@@ -164,7 +175,7 @@ WORKING STYLE: Short sprints with breaks`
 
   it('parses fields and drops unknowns', () => {
     const f = parseProfile(raw)
-    expect(f.map((x) => x.key)).toEqual(['goals', 'role', 'highValue', 'avoidance', 'energy', 'style'])
+    expect(f.map((x) => x.key)).toEqual(['goals', 'highValue', 'avoidance', 'energy', 'role', 'style'])
     expect(f[0].value).toBe('Launch my portfolio by October 30')
   })
 

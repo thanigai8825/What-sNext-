@@ -14,8 +14,8 @@ export function useMediaQuery(query: string): boolean {
 
 export const useIsDesktop = () => useMediaQuery('(min-width: 768px)')
 
-/** True when focus is in a text field, so single-key shortcuts stay out of the way. */
-export function isTyping(e: KeyboardEvent): boolean {
+/** True when the event comes from a text field, so shortcuts and paste handlers stay out of the way. */
+export function isTyping(e: { target: EventTarget | null }): boolean {
   const el = e.target as HTMLElement | null
   if (!el) return false
   const tag = el.tagName
